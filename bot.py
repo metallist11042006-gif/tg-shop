@@ -94,6 +94,13 @@ async def main():
     app_builder = Application.builder().token(BOT_TOKEN)
     application = app_builder.build()
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
+    from telegram.ext import CommandHandler
+
+async def start(update, context):
+    await update.message.reply_text("👋 Привет! Нажми кнопку ниже чтобы открыть магазин 👇")
+
+application.add_handler(CommandHandler("start", start))
+    
 
     if WEBHOOK_URL:
         webhook_path = "/webhook"
