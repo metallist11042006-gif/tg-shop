@@ -1,14 +1,10 @@
-"""
-DRIP STORE — Telegram Bot Backend (исправленная версия)
-"""
-
 import os
 import json
 import logging
 import asyncio
 from aiohttp import web
-from telegram import Update, Bot
-from telegram.ext import Application, MessageHandler, filters, ContextTypes
+from telegram import Update
+from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 from telegram.constants import ParseMode
 
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +17,13 @@ WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")
 
 CURRENCY_SYMBOLS = {"USD": "$", "UAH": "₴", "PLN": "zł"}
 RATES = {"USD": 1, "UAH": 41.5, "PLN": 4.1}
+
+
+async def cmd_start(update, context):
+    await update.message.reply_text(
+        "👋 Привет! Нажми кнопку *Открыть магазин* внизу слева 👇",
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 
 async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -38,7 +41,6 @@ async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE
         await message.reply_text("❌ Ошибка заказа. Попробуй ещё раз.")
         return
 
-    # Покупателю
     buyer_text = (
         "✅ <b>Заказ принят!</b>\n\n"
         "Менеджер свяжется с тобой в ближайшее время для подтверждения и оплаты.\n\n"
@@ -48,11 +50,14 @@ async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     await message.reply_text(buyer_text, parse_mode=ParseMode.HTML)
 
-    # Админу
     username = user.username
     full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
-    user_link = f'<a href="tg://user?id={user.id}">@{username}</a>' if username else f'<a href="tg://user?id={user.id}">{full_name}</a>'
-    contact = f"@{username}" if username else f"ID: {user.id} (нет username)"
+    if username:
+        user_link = f'<a href="tg://user?id={user.id}">@{username}</a>'
+        contact = f"@{username}"
+    else:
+        user_link = f'<a href="tg://user?id={user.id}">{full_name}</a>'
+        contact = f"ID: {user.id} (нет username)"
 
     admin_text = (
         f"🔔 <b>НОВЫЙ ЗАКАЗ!</b>\n\n"
@@ -61,8 +66,8 @@ async def handle_web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE
         f"📲 {contact}\n\n"
         f"🛒 <b>Состав:</b>\n"
         + format_items(order, for_admin=True)
-        + f"\n\n💵 Валюта: {order.get('currency','USD')}\n"
-        f"💰 <b>ИТОГО: {order.get('total_display','—')}</b> (≈ ${order.get('total_usd','0')} USD)\n\n"
+        + f"\n\n💵 Валюта: {order.get('currency', 'USD')}\n"
+        f"💰 <b>ИТОГО: {order.get('total_display', '—')}</b> (≈ ${order.get('total_usd', '0')} USD)\n\n"
         f"⚡️ Напиши покупателю!"
     )
     try:
@@ -82,25 +87,19 @@ def format_items(order, for_admin=False):
         qty = item.get("qty", 1)
         size = f" | р.{item['size']}" if item.get("size") else ""
         total = p * qty * rate
-        price_str = f"${p*qty:.0f}" if cur == "USD" else f"{total:.0f} {sym}"
+        price_str = f"${p * qty:.0f}" if cur == "USD" else f"{total:.0f} {sym}"
+        name = f"{item.get('brand', '')} {item.get('title', '')}"
         if for_admin:
-            lines.append(f"{i}. <b>{item.get('brand','')} {item.get('title','')}</b>{size} × {qty} — {price_str}")
+            lines.append(f"{i}. <b>{name}</b>{size} × {qty} — {price_str}")
         else:
-            lines.append(f"{i}. {item.get('brand','')} {item.get('title','')}{size} × {qty} — {price_str}")
+            lines.append(f"{i}. {name}{size} × {qty} — {price_str}")
     return "\n".join(lines)
 
 
 async def main():
-    app_builder = Application.builder().token(BOT_TOKEN)
-    application = app_builder.build()
+    application = Application.builder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
-    from telegram.ext import CommandHandler
-
-async def start(update, context):
-    await update.message.reply_text("👋 Привет! Нажми кнопку ниже чтобы открыть магазин 👇")
-
-application.add_handler(CommandHandler("start", start))
-    
 
     if WEBHOOK_URL:
         webhook_path = "/webhook"
@@ -128,9 +127,8 @@ application.add_handler(CommandHandler("start", start))
         await runner.setup()
         site = web.TCPSite(runner, "0.0.0.0", PORT)
         await site.start()
-        logger.info(f"Server started on port {PORT}")
+        logger.info(f"Server on port {PORT}")
 
-        # Держим процесс живым
         while True:
             await asyncio.sleep(3600)
     else:
