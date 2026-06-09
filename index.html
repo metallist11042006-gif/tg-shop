@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>NOVA SHOP</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #0f0f0f);
+  --tg-text: var(--tg-theme-text-color, #ffffff);
+  --tg-hint: var(--tg-theme-hint-color, #999999);
+  --tg-btn: var(--tg-theme-button-color, #e0ff00);
+  --tg-secondary: var(--tg-theme-secondary-bg-color, #1a1a1a);
+  --accent: #e0ff00;
+  --accent-dim: rgba(224,255,0,0.12);
+  --border: rgba(255,255,255,0.07);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { background: var(--tg-bg); color: var(--tg-text); font-family: 'DM Sans', sans-serif; margin: 0; padding: 0; overflow-x: hidden; min-height: 100vh; }
+h1,h2,.display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
+.screen { position: fixed; inset: 0; overflow-y: auto; opacity: 0; pointer-events: none; transform: translateY(24px); transition: opacity .32s cubic-bezier(.4,0,.2,1), transform .32s cubic-bezier(.4,0,.2,1); background: var(--tg-bg); z-index: 10; }
+.screen.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+.topbar { position: sticky; top: 0; z-index: 99; background: var(--tg-bg); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+.topbar-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; flex: 1; }
+.back-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--tg-secondary); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background .18s; }
+.back-btn:active { background: var(--accent-dim); }
+.currency-switcher { display: flex; gap: 4px; background: var(--tg-secondary); border-radius: 20px; padding: 3px; border: 1px solid var(--border); }
+.cur-btn { padding: 3px 10px; border-radius: 16px; font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .2s; color: var(--tg-hint); }
+.cur-btn.active { background: var(--accent); color: #0f0f0f; }
+.cart-btn { position: relative; cursor: pointer; width: 36px; height: 36px; background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cart-badge { position: absolute; top: -4px; right: -4px; background: var(--accent); color: #0f0f0f; border-radius: 50%; width: 18px; height: 18px; font-size: .68rem; font-weight: 700; display: none; align-items: center; justify-content: center; }
+.hero-banner { width: 100%; height: 200px; background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; border-bottom: 1px solid var(--border); }
+.hero-banner::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 60% 40%, rgba(224,255,0,0.18) 0%, transparent 65%); }
+.hero-logo { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; line-height: 1; color: var(--accent); text-shadow: 0 0 60px rgba(224,255,0,0.4); position: relative; z-index: 1; }
+.hero-sub { font-size: .82rem; color: var(--tg-hint); letter-spacing: .18em; text-transform: uppercase; position: relative; z-index: 1; margin-top: 4px; }
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px 16px; }
+.cat-card { background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 16px; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all .22s; user-select: none; position: relative; overflow: hidden; }
+.cat-card:active { transform: scale(0.97); background: var(--accent-dim); }
+.cat-icon { font-size: 2.4rem; }
+.cat-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.25rem; }
+.cat-count { font-size: .75rem; color: var(--tg-hint); }
+.brand-list { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.brand-row { background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all .2s; user-select: none; }
+.brand-row:active { transform: scale(0.98); background: var(--accent-dim); }
+.brand-logo { width: 44px; height: 44px; border-radius: 10px; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; flex-shrink: 0; }
+.brand-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; flex: 1; }
+.brand-cnt { font-size: .75rem; color: var(--tg-hint); background: var(--tg-bg); border: 1px solid var(--border); padding: 2px 8px; border-radius: 20px; }
+.product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+.product-card { background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: transform .2s; }
+.product-card:active { transform: scale(0.97); }
+.product-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: #1a1a1a; }
+.product-img-placeholder { width: 100%; aspect-ratio: 1/1; background: linear-gradient(135deg,#1a1a1a,#222); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: rgba(255,255,255,0.15); }
+.product-body { padding: 10px 12px 12px; }
+.product-title { font-size: .85rem; font-weight: 600; line-height: 1.3; }
+.product-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--accent); margin-top: 4px; }
+.product-desc { font-size: .72rem; color: var(--tg-hint); margin-top: 3px; line-height: 1.4; }
+.product-detail-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #1a1a1a; }
+.detail-body { padding: 20px 16px; }
+.detail-brand { font-size: .78rem; color: var(--tg-hint); text-transform: uppercase; letter-spacing: .1em; }
+.detail-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; line-height: 1.1; margin-top: 4px; }
+.detail-price { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--accent); margin-top: 6px; }
+.detail-desc { font-size: .85rem; color: var(--tg-hint); line-height: 1.6; margin-top: 12px; }
+.sizes-label { font-size: .78rem; color: var(--tg-hint); text-transform: uppercase; letter-spacing: .1em; margin: 18px 0 8px; }
+.sizes-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.size-btn { padding: 7px 14px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--tg-text); font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .18s; }
+.size-btn.selected { background: var(--accent); border-color: var(--accent); color: #0f0f0f; }
+.add-cart-btn { width: 100%; margin-top: 20px; padding: 16px; background: var(--accent); color: #0f0f0f; border: none; border-radius: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1.25rem; letter-spacing: .06em; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.add-cart-btn:active { transform: scale(0.98); filter: brightness(0.9); }
+.add-cart-btn:disabled { opacity: .4; cursor: not-allowed; }
+.cart-items { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.cart-item { background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 14px; display: flex; gap: 12px; padding: 12px; }
+.cart-item-img { width: 72px; height: 72px; border-radius: 10px; object-fit: cover; background: #1a1a1a; flex-shrink: 0; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-title { font-size: .85rem; font-weight: 600; line-height: 1.3; }
+.cart-item-size { font-size: .75rem; color: var(--tg-hint); margin-top: 2px; }
+.cart-item-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; color: var(--accent); margin-top: 4px; }
+.qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.qty-btn { width: 28px; height: 28px; border-radius: 8px; background: var(--tg-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; color: var(--tg-text); }
+.qty-num { font-size: .9rem; font-weight: 600; min-width: 20px; text-align: center; }
+.delete-btn { color: #ff4444; font-size: 1.2rem; cursor: pointer; padding: 4px; }
+.cart-total-box { margin: 0 16px 8px; background: var(--tg-secondary); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+.cart-total-row { display: flex; justify-content: space-between; align-items: center; }
+.cart-total-label { font-size: .85rem; color: var(--tg-hint); }
+.cart-total-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--accent); }
+.checkout-btn { width: calc(100% - 32px); margin: 12px 16px 24px; padding: 17px; background: var(--accent); color: #0f0f0f; border: none; border-radius: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: .06em; cursor: pointer; display: block; }
+.empty-cart { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 32px; color: var(--tg-hint); text-align: center; gap: 12px; }
+.loader-wrap { display: flex; align-items: center; justify-content: center; padding: 60px; flex-direction: column; gap: 12px; color: var(--tg-hint); }
+.spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #0f0f0f; padding: 10px 20px; border-radius: 40px; font-weight: 600; font-size: .85rem; opacity: 0; transition: all .3s; z-index: 999; pointer-events: none; white-space: nowrap; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#loading-screen { position: fixed; inset: 0; z-index: 9999; background: var(--tg-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity .4s; }
+#loading-screen.fade-out { opacity: 0; pointer-events: none; }
+.loading-logo { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="loading-logo">NOVA</div>
+  <div class="spinner"></div>
+</div>
+
+<div id="toast"></div>
+
+<div id="screen-welcome" class="screen">
+  <div class="topbar">
+    <div class="topbar-title">NOVA SHOP</div>
+    <div class="currency-switcher">
+      <div class="cur-btn active" data-cur="USD">$</div>
+      <div class="cur-btn" data-cur="UAH">₴</div>
+      <div class="cur-btn" data-cur="PLN">zł</div>
+    </div>
+    <div class="cart-btn" onclick="showCart()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <div class="cart-badge" id="cb1">0</div>
+    </div>
+  </div>
+  <div class="hero-banner">
+    <div class="hero-logo">NOVA</div>
+    <div class="hero-sub">Люкс копии • Лучшее качество</div>
+  </div>
+  <div style="padding:20px 16px 8px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem">Выбери категорию</div>
+    <div style="font-size:.82rem;color:var(--tg-hint);margin-top:2px">Реплики люкс брендов • Быстрая доставка</div>
+  </div>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<div id="screen-brands" class="screen">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-welcome')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="topbar-title" id="brands-title">Бренды</div>
+    <div class="currency-switcher">
+      <div class="cur-btn active" data-cur="USD">$</div>
+      <div class="cur-btn" data-cur="UAH">₴</div>
+      <div class="cur-btn" data-cur="PLN">zł</div>
+    </div>
+    <div class="cart-btn" onclick="showCart()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <div class="cart-badge" id="cb2">0</div>
+    </div>
+  </div>
+  <div class="brand-list" id="brand-list"></div>
+</div>
+
+<div id="screen-catalog" class="screen">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-brands')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="topbar-title" id="catalog-title">Каталог</div>
+    <div class="cart-btn" onclick="showCart()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <div class="cart-badge" id="cb3">0</div>
+    </div>
+  </div>
+  <div class="product-grid" id="product-grid"></div>
+</div>
+
+<div id="screen-detail" class="screen">
+  <div class="topbar">
+    <div class="back-btn" onclick="showScreen('screen-catalog')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="topbar-title" id="detail-topbar-title">Товар</div>
+    <div class="cart-btn" onclick="showCart()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <div class="cart-badge" id="cb4">0</div>
+    </div>
+  </div>
+  <div id="detail-content"></div>
+</div>
+
+<div id="screen-cart" class="screen">
+  <div class="topbar">
+    <div class="back-btn" onclick="goBackFromCart()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div class="topbar-title">Корзина</div>
+    <div style="width:36px"></div>
+  </div>
+  <div id="cart-content"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ТОВАРЫ — добавляй сюда новые позиции!
+// ══════════════════════════════════════════
+var PRODUCTS = [
+  {
+    id: '1',
+    Category: 'Кроссовки',
+    Brand: 'Nike',
+    Title: 'Air Force 1 White',
+    Price_USD: 150,
+    Sizes: '40,41,42,43,44,45',
+    Image: '',
+    Description: 'Реплика 1:1, топовое качество'
+  },
+  {
+    id: '2',
+    Category: 'Кроссовки',
+    Brand: 'Nike',
+    Title: 'Air Max 90',
+    Price_USD: 130,
+    Sizes: '39,40,41,42,43,44',
+    Image: '',
+    Description: 'Реплика AAA+ качество'
+  },
+  {
+    id: '3',
+    Category: 'Кроссовки',
+    Brand: 'Adidas',
+    Title: 'Yeezy 350 Zebra',
+    Price_USD: 140,
+    Sizes: '39,40,41,42,43',
+    Image: '',
+    Description: 'Точная копия оригинала'
+  },
+  {
+    id: '4',
+    Category: 'Одежда',
+    Brand: 'Supreme',
+    Title: 'Box Logo Hoodie',
+    Price_USD: 95,
+    Sizes: 'S,M,L,XL,XXL',
+    Image: '',
+    Description: 'Реплика, плотный хлопок 400г'
+  }
+  // ДОБАВЛЯЙ НОВЫЕ ТОВАРЫ ВЫШЕ ЭТОЙ СТРОКИ
+  // Скопируй блок выше, поставь запятую после }, и вставь
+];
+
+// ══════════════════════════════════════════
+// КУРСЫ ВАЛЮТ
+// ══════════════════════════════════════════
+var RATES = { USD: 1, UAH: 41.5, PLN: 4.1 };
+var SYMBOLS = { USD: '$', UAH: '₴', PLN: 'zł' };
+
+var CATEGORIES = [
+  { key: 'Одежда', icon: '👕' },
+  { key: 'Кроссовки', icon: '👟' },
+  { key: 'Сумки', icon: '👜' },
+  { key: 'Аксессуары', icon: '🧢' }
+];
+
+var tg = window.Telegram && window.Telegram.WebApp;
+var cart = [];
+var currentCurrency = 'USD';
+var currentCategory = '';
+var currentBrand = '';
+var selectedProduct = null;
+var selectedSize = '';
+var prevScreen = 'screen-welcome';
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function() {
+  if (tg) { tg.ready(); tg.expand(); }
+  loadCart();
+  setupCurrency();
+  renderCategories();
+  showScreen('screen-welcome');
+  setTimeout(function() {
+    var ls = document.getElementById('loading-screen');
+    ls.classList.add('fade-out');
+    setTimeout(function() { ls.remove(); }, 400);
+  }, 600);
+});
+
+// ══════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  var el = document.getElementById(id);
+  el.classList.add('active');
+  el.scrollTop = 0;
+}
+
+function goBackFromCart() {
+  haptic('light');
+  showScreen(prevScreen);
+}
+
+// ══════════════════════════════════════════
+// CURRENCY
+// ══════════════════════════════════════════
+function setupCurrency() {
+  document.querySelectorAll('.cur-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      currentCurrency = btn.dataset.cur;
+      document.querySelectorAll('.cur-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.cur === currentCurrency);
+      });
+      if (document.getElementById('screen-catalog').classList.contains('active')) {
+        renderCatalog(currentCategory, currentBrand);
+      }
+      if (document.getElementById('screen-detail').classList.contains('active') && selectedProduct) {
+        renderDetail(selectedProduct);
+      }
+    });
+  });
+}
+
+function formatPrice(usd) {
+  var val = Math.round(usd * RATES[currentCurrency]);
+  var sym = SYMBOLS[currentCurrency];
+  return currentCurrency === 'USD' ? sym + val : val + ' ' + sym;
+}
+
+// ══════════════════════════════════════════
+// CATEGORIES
+// ══════════════════════════════════════════
+function renderCategories() {
+  var grid = document.getElementById('cat-grid');
+  grid.innerHTML = CATEGORIES.map(function(cat) {
+    var count = PRODUCTS.filter(function(p) { return p.Category === cat.key; }).length;
+    return '<div class="cat-card" onclick="openCategory(\'' + cat.key + '\')">' +
+      '<div class="cat-icon">' + cat.icon + '</div>' +
+      '<div class="cat-name">' + cat.key + '</div>' +
+      '<div class="cat-count">' + (count ? count + ' товаров' : 'Скоро') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function openCategory(cat) {
+  haptic('light');
+  currentCategory = cat;
+  document.getElementById('brands-title').textContent = cat;
+  renderBrands(cat);
+  showScreen('screen-brands');
+}
+
+// ══════════════════════════════════════════
+// BRANDS
+// ══════════════════════════════════════════
+function renderBrands(category) {
+  var products = PRODUCTS.filter(function(p) { return p.Category === category; });
+  var brandMap = {};
+  products.forEach(function(p) {
+    brandMap[p.Brand] = (brandMap[p.Brand] || 0) + 1;
+  });
+  var brands = Object.keys(brandMap);
+  var list = document.getElementById('brand-list');
+  if (!brands.length) {
+    list.innerHTML = '<div class="loader-wrap"><div style="color:var(--tg-hint);text-align:center">В этой категории пока нет товаров</div></div>';
+    return;
+  }
+  list.innerHTML = brands.map(function(brand) {
+    return '<div class="brand-row" onclick="openBrand(\'' + brand + '\')">' +
+      '<div class="brand-logo">' + brand.charAt(0) + '</div>' +
+      '<div class="brand-name">' + brand + '</div>' +
+      '<div class="brand-cnt">' + brandMap[brand] + ' шт</div>' +
+      '<div style="color:var(--tg-hint)">›</div>' +
+      '</div>';
+  }).join('');
+}
+
+function openBrand(brand) {
+  haptic('light');
+  currentBrand = brand;
+  document.getElementById('catalog-title').textContent = brand;
+  renderCatalog(currentCategory, brand);
+  showScreen('screen-catalog');
+}
+
+// ══════════════════════════════════════════
+// CATALOG
+// ══════════════════════════════════════════
+function renderCatalog(category, brand) {
+  var products = PRODUCTS.filter(function(p) { return p.Category === category && p.Brand === brand; });
+  var grid = document.getElementById('product-grid');
+  if (!products.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1" class="loader-wrap"><div style="color:var(--tg-hint)">Нет товаров</div></div>';
+    return;
+  }
+  grid.innerHTML = products.map(function(p) {
+    var imgHtml = p.Image
+      ? '<img class="product-img" src="' + p.Image + '" alt="' + p.Title + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=product-img-placeholder>👟</div>\'">'
+      : '<div class="product-img-placeholder">👟</div>';
+    return '<div class="product-card" onclick="openDetail(\'' + p.id + '\')">' +
+      imgHtml +
+      '<div class="product-body">' +
+      '<div class="product-title">' + p.Title + '</div>' +
+      '<div class="product-price">' + formatPrice(p.Price_USD) + '</div>' +
+      '<div class="product-desc">' + (p.Description || '').slice(0, 50) + '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// DETAIL
+// ══════════════════════════════════════════
+function openDetail(id) {
+  haptic('light');
+  selectedProduct = PRODUCTS.find(function(p) { return p.id === id; });
+  selectedSize = '';
+  if (!selectedProduct) return;
+  renderDetail(selectedProduct);
+  showScreen('screen-detail');
+}
+
+function renderDetail(p) {
+  var sizes = (p.Sizes || '').split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+  document.getElementById('detail-topbar-title').textContent = p.Brand;
+  var imgHtml = p.Image
+    ? '<img class="product-detail-img" src="' + p.Image + '" alt="' + p.Title + '">'
+    : '<div style="width:100%;aspect-ratio:4/3;background:#1a1a1a;display:flex;align-items:center;justify-content:center;font-size:4rem;color:rgba(255,255,255,.15)">👟</div>';
+  var sizesHtml = sizes.length
+    ? '<div class="sizes-label">Выбери размер</div><div class="sizes-wrap" id="sizes-wrap">' +
+      sizes.map(function(s) {
+        return '<button class="size-btn' + (selectedSize === s ? ' selected' : '') + '" onclick="selectSize(\'' + s + '\')">' + s + '</button>';
+      }).join('') + '</div>'
+    : '';
+  var btnDisabled = sizes.length && !selectedSize ? 'disabled' : '';
+  var btnText = sizes.length && !selectedSize ? 'Выбери размер' : 'Добавить в корзину';
+  document.getElementById('detail-content').innerHTML =
+    imgHtml +
+    '<div class="detail-body">' +
+    '<div class="detail-brand">' + p.Brand + '</div>' +
+    '<div class="detail-title">' + p.Title + '</div>' +
+    '<div class="detail-price">' + formatPrice(p.Price_USD) + '</div>' +
+    '<div class="detail-desc">' + (p.Description || '') + '</div>' +
+    sizesHtml +
+    '<button class="add-cart-btn" id="add-cart-btn" onclick="addToCart()" ' + btnDisabled + '>' + btnText + '</button>' +
+    '</div>';
+}
+
+function selectSize(size) {
+  haptic('light');
+  selectedSize = size;
+  document.querySelectorAll('.size-btn').forEach(function(btn) {
+    btn.classList.toggle('selected', btn.textContent.trim() === size);
+  });
+  var addBtn = document.getElementById('add-cart-btn');
+  if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'Добавить в корзину'; }
+}
+
+// ══════════════════════════════════════════
+// CART
+// ══════════════════════════════════════════
+function addToCart() {
+  if (!selectedProduct) return;
+  haptic('success');
+  var p = selectedProduct;
+  var existing = cart.find(function(i) { return i.id === p.id && i.size === selectedSize; });
+  if (existing) { existing.qty++; }
+  else { cart.push({ id: p.id, title: p.Title, brand: p.Brand, price_usd: p.Price_USD, size: selectedSize, qty: 1, image: p.Image }); }
+  saveCart();
+  updateBadges();
+  showToast('Добавлено в корзину ✓');
+}
+
+function showCart() {
+  haptic('light');
+  var screens = ['screen-welcome','screen-brands','screen-catalog','screen-detail'];
+  for (var i = 0; i < screens.length; i++) {
+    if (document.getElementById(screens[i]).classList.contains('active')) { prevScreen = screens[i]; break; }
+  }
+  renderCart();
+  showScreen('screen-cart');
+}
+
+function renderCart() {
+  var container = document.getElementById('cart-content');
+  if (!cart.length) {
+    container.innerHTML = '<div class="empty-cart"><div style="font-size:3rem;opacity:.4">🛒</div><div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem">Корзина пуста</div><div style="font-size:.85rem">Добавь товары из каталога</div></div>';
+    return;
+  }
+  var total = cart.reduce(function(s, i) { return s + i.price_usd * i.qty; }, 0);
+  var itemsHtml = cart.map(function(item, idx) {
+    var imgHtml = item.image
+      ? '<img class="cart-item-img" src="' + item.image + '" alt="">'
+      : '<div class="cart-item-img" style="background:#222;display:flex;align-items:center;justify-content:center;font-size:1.8rem">👟</div>';
+    return '<div class="cart-item">' + imgHtml +
+      '<div class="cart-item-info">' +
+      '<div class="cart-item-title">' + item.brand + ' — ' + item.title + '</div>' +
+      (item.size ? '<div class="cart-item-size">Размер: ' + item.size + '</div>' : '') +
+      '<div class="cart-item-price">' + formatPrice(item.price_usd) + '</div>' +
+      '<div class="qty-controls">' +
+      '<div class="qty-btn" onclick="changeQty(' + idx + ',-1)">−</div>' +
+      '<div class="qty-num">' + item.qty + '</div>' +
+      '<div class="qty-btn" onclick="changeQty(' + idx + ',1)">+</div>' +
+      '<div style="flex:1"></div>' +
+      '<div class="delete-btn" onclick="removeItem(' + idx + ')">✕</div>' +
+      '</div></div></div>';
+  }).join('');
+  container.innerHTML =
+    '<div class="cart-items">' + itemsHtml + '</div>' +
+    '<div class="cart-total-box"><div class="cart-total-row"><div class="cart-total-label">Итого (' + cart.reduce(function(s,i){return s+i.qty;},0) + ' поз.)</div><div class="cart-total-val">' + formatPrice(total) + '</div></div></div>' +
+    '<button class="checkout-btn" onclick="checkout()">Оформить заказ →</button>';
+}
+
+function changeQty(idx, delta) {
+  haptic('light');
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  saveCart(); updateBadges(); renderCart();
+}
+
+function removeItem(idx) {
+  haptic('light');
+  cart.splice(idx, 1);
+  saveCart(); updateBadges(); renderCart();
+}
+
+function updateBadges() {
+  var total = cart.reduce(function(s,i){return s+i.qty;},0);
+  ['cb1','cb2','cb3','cb4'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) { b.textContent = total; b.style.display = total ? 'flex' : 'none'; }
+  });
+}
+
+function saveCart() { try { localStorage.setItem('nova_cart', JSON.stringify(cart)); } catch(e) {} }
+function loadCart() { try { var d = localStorage.getItem('nova_cart'); if (d) cart = JSON.parse(d); updateBadges(); } catch(e) {} }
+
+function checkout() {
+  if (!cart.length) return;
+  haptic('success');
+  var total = cart.reduce(function(s,i){return s+i.price_usd*i.qty;},0);
+  var totalConv = Math.round(total * RATES[currentCurrency]);
+  var sym = SYMBOLS[currentCurrency];
+  var orderData = {
+    items: cart.map(function(i){return{title:i.title,brand:i.brand,size:i.size,qty:i.qty,price_usd:i.price_usd};}),
+    currency: currentCurrency,
+    total_usd: total.toFixed(2),
+    total_display: totalConv + ' ' + sym
+  };
+  if (tg && tg.sendData) { tg.sendData(JSON.stringify(orderData)); }
+  else { alert('Заказ:\n' + JSON.stringify(orderData, null, 2)); }
+}
+
+function haptic(type) {
+  try { if (tg && tg.HapticFeedback) { if (type==='success') tg.HapticFeedback.notificationOccurred('success'); else tg.HapticFeedback.impactOccurred(type); } } catch(e) {}
+}
+
+var toastTimer;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){t.classList.remove('show');}, 2000);
+}
+</script>
+</body>
+</html>
